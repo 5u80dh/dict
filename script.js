@@ -1,64 +1,37 @@
-document.getElementById('search-btn').addEventListener('click', function() {
-    var word = document.getElementById('word-input').value;
-    if (word) {
-        fetchDefinition(word);
-    }
-});
+const url = "https://api.dictionaryapi.dev/api/v2/entries/en/";
+const result = document.getElementById("result");
+const sound = document.getElementById("sound");
+const btn = document.getElementById("search-btn");
 
-async function fetchDefinition(word) {
-    const apiUrl = `https://api.dictionaryapi.dev/api/v2/entries/en/${word}`;
-    try {
-        const response = await fetch(apiUrl);
-        if (!response.ok) {
-            throw new Error('Word not found');
-        }
-        const data = await response.json();
-        displayDefinitions(data[0]);
-    } catch (error) {
-        document.getElementById('definition-container').innerHTML = '<h2>Error</h2><p>Definition not found. Please try another word.</p>';
-    }
-}
-
-function displayDefinitions(data) {
-    const container = document.getElementById('definition-container');
-    container.innerHTML = '';
-    
-    const wordTitle = document.createElement('h2');
-    wordTitle.innerText = data.word;
-    container.appendChild(wordTitle);
-
-    let definitionCount = 0;
-    
-    data.meanings.forEach(meaning => {
-        meaning.definitions.forEach((definitionObj, index) => {
-            if (definitionCount < 5) {
-                const definition = document.createElement('div');
-                definition.className = 'definition';
-                definition.innerText = `${definitionCount + 1}. ${definitionObj.definition}`;
-                
-                const synonymsAntonyms = document.createElement('div');
-                synonymsAntonyms.className = 'synonyms-antonyms';
-                
-                if (definitionObj.synonyms.length > 0) {
-                    const synonyms = document.createElement('p');
-                    synonyms.innerHTML = `<span>Synonyms:</span> ${definitionObj.synonyms.join(', ')}`;
-                    synonymsAntonyms.appendChild(synonyms);
-                }
-                
-                if (definitionObj.antonyms.length > 0) {
-                    const antonyms = document.createElement('p');
-                    antonyms.innerHTML = `<span>Antonyms:</span> ${definitionObj.antonyms.join(', ')}`;
-                    synonymsAntonyms.appendChild(antonyms);
-                }
-                
-                definition.appendChild(synonymsAntonyms);
-                definition.addEventListener('click', () => {
-                    synonymsAntonyms.style.display = synonymsAntonyms.style.display === 'block' ? 'none' : 'block';
-                });
-                
-                container.appendChild(definition);
-                definitionCount++;
-            }
+btn.addEventListener("click", () => {
+    let inpWord = document.getElementById("inp-word").value;
+    fetch(`${url}${inpWord}`)
+        .then((response) => response.json())
+        .then((data) => {
+            console.log(data);
+            result.innerHTML = `
+            <div class="word">
+                    <h3>${inpWord}</h3>
+                    <button onclick="playSound()">
+                        <i class="fas fa-volume-up"></i>
+                    </button>
+                </div>
+                <div class="details">
+                    <p>${data[0].meanings[0].partOfSpeech}</p>
+                    <p>/${data[0].phonetic}/</p>
+                </div>
+                <p class="word-meaning">
+                   ${data[0].meanings[0].definitions[0].definition}
+                </p>
+                <p class="word-example">
+                    ${data[0].meanings[0].definitions[0].example || ""}
+                </p>`;
+            sound.setAttribute("src", `https:${data[0].phonetics[0].audio}`);
+        })
+        .catch(() => {
+            result.innerHTML = `<h3 class="error">Couldn't Find The Word</h3>`;
         });
-    });
+});
+function playSound() {
+    sound.play();
 }
